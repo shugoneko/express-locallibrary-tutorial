@@ -23,12 +23,12 @@ AuthorSchema
 .virtual('lifespan')
 .get(function () {
   if (this.date_of_birth != null){
-  var bdate = moment(this.date_of_birth).format('MMMM Do, YYYY');
+  var dob = moment(this.date_of_birth).utc().format('MMMM Do, YYYY');
   }
   if (this.date_of_death != null){
-  var ddate = moment(this.date_of_death).format('MMMM Do, YYYY');
+  var dod = moment(this.date_of_death).utc().format('MMMM Do, YYYY');
   }
-  return (bdate == null && ddate != null) ? 'Birth N/A - ' + ddate : (bdate != null && ddate == null) ? bdate + ' - Death N/A' :(bdate == null && ddate == null) ? 'Lifespan N/A' : bdate + ' - ' + ddate;
+  return (dob == null && dod != null) ? 'Birth N/A - ' + dod : (dob != null && dod == null) ? dob + ' - Death N/A' :(dob == null && dod == null) ? 'Lifespan N/A' : dob + ' - ' + dod;
 });
 
 // Virtual for author's URL
