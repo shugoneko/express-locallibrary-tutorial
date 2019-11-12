@@ -145,11 +145,82 @@ exports.author_delete_post = function(req, res, next) {
 };
 
 // Display Author update form on GET.
-exports.author_update_get = function(req, res) {
-    res.send('NOT IMPLEMENTED: Author update GET');
+exports.author_update_get = function(req, res, next) {
+
+    // Get author, books for form.
+    async.parallel({
+        author: function(callback) {
+            Author.findById(req.params.id).populate('book').exec(callback);
+        },
+        books: function(callback) {
+            Book.find(callback);
+        },
+        }, function(err, results) {
+            if (err) { return next(err); }
+            if (results.author==null) { // No results.
+                var err = new Error('Author not found');
+                err.status = 404;
+                return next(err);
+            }
+            // Success.
+            // Mark our selected genres as checked
+            res.render('author_form', { title: 'Update Author', books: results.books, author: results.author });
+        });
+
 };
 
 // Handle Author update on POST.
-exports.author_update_post = function(req, res) {
-    res.send('NOT IMPLEMENTED: Author update POST');
-};
+exports.author_update_post = [
+
+    // Validate fields.
+    body('first_name', 'First Name must not be empty.').isLength({ required: true, max: 100 }).trim(),
+    body('famly_name', 'Last Name must not be empty.').isLength({ required: true, max: 100 }).trim(),
+    body('date_of_birth'),
+    body('date_of_death'),
+	
+
+    // Sanitize fields.
+    sanitizeBody('first_name').escape(),
+    sanitizeBody('famly_name').escape(),
+    sanitizeBody('date_of_birth').escape(),
+    sanitizeBody('date_of_death').escape(),
+
+    // Process request after validation and sanitization.
+    (req, res, next) => {
+
+        // Extract the validation errors from a request.
+        const errors = validationResult(req);
+
+        // Create an Author object with escaped/trimmed data and old id.
+        var author = new Author(
+          { first_name: req.body.first_name,
+            famly_name: req.body.famly_name,
+            date_of_birth: req.body.date_of_birth,
+            date_of_death: req.body.date_of_death,
+            _id:req.params.id //This is required, or a new ID will be assigned!
+           });
+
+        if (!errors.isEmpty()) {
+            // There are errors. Render form again with sanitized values/error messages.
+            // Get all books for form.
+            async.parallel({
+                books: function(callback) {
+                    Book.find(callback);
+                },
+                
+            }, function(err, results) {
+                if (err) { return next(err); }
+                res.render('author_form', { title: 'Update Author',books: results.books, author: author, errors: errors.array() });
+            });
+            return;
+        }
+        else {
+            // Data from form is valid. Update the record.
+            Author.findByIdAndUpdate(req.params.id, author, {}, function (err,theauthor) {
+                if (err) { return next(err); }
+                   // Successful - redirect to author detail page.
+                   res.redirect(theauthor.url);
+                });
+        }
+    }
+];

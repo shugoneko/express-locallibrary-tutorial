@@ -31,6 +31,17 @@ AuthorSchema
   return (dob == null && dod != null) ? 'Birth N/A - ' + dod : (dob != null && dod == null) ? dob + ' - Death N/A' :(dob == null && dod == null) ? 'Lifespan N/A' : dob + ' - ' + dod;
 });
 
+AuthorSchema
+.virtual('dob_form_format')
+.get(function () {
+	return moment(this.date_of_birth).utc().format('YYYY-MM-DD');
+});
+AuthorSchema
+.virtual('dod_form_format')
+.get(function () {
+	return moment(this.date_of_death).utc().format('YYYY-MM-DD');
+});
+
 // Virtual for author's URL
 AuthorSchema
 .virtual('url')
